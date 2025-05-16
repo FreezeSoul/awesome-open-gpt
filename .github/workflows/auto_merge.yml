@@ -1,0 +1,49 @@
+name: Merge Files automatically
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # daily cron
+
+  push:
+    branches:
+        - main
+
+  workflow_dispatch:
+
+jobs:
+  Update_README:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Main Branch
+      uses: actions/checkout@v2
+      with:
+        ref: main
+        path: ./
+
+    - name: Install Requirements
+      run: |
+        pip install -r requirements.txt --break-system-packages || true
+        pip install -r requirements.txt || true
+
+    - name: Auto Update Star
+      run: |
+        python auto_update_star.py || true
+      env:
+        GITHUB_ACCESS_KEY: ${{ secrets.GH_TOKEN }}  # 使用GitHub提供的token进行身份验证
+
+
+#    - name: Auto Translate
+#      run: |
+#        python auto_translator.py || true
+
+    - name: Commit and Push Changes
+      run: |
+        git config user.name "Action Sync Bot"
+        git config user.email "jiaying.yang@qq.com"
+        git remote set-url origin https://x-access-token:${{ secrets.PUST_TOKEN }}@github.com/EwingYangs/awesome-open-gpt.git
+        git add README.md README_en.md
+        git commit -m "automatically commit and push" || true
+        git push origin HEAD:main || true
+      env:
+        GITHUB_TOKEN: ${{ secrets.PUST_TOKEN }}
